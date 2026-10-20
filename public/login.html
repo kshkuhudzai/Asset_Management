@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - National Blood Service Zimbabwe Asset Management</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body class="login-page">
+
+    <main class="login-card">
+        <div class="login-brand">
+            <img class="logo" src="/images/nbsz-logo.jpg" alt="National Blood Service Zimbabwe">
+            <h1>Asset Management System</h1>
+            <p>Sign in to continue</p>
+        </div>
+
+        <div id="alertBox" class="alert" role="alert" aria-live="polite"></div>
+
+        <form id="loginForm" novalidate autocomplete="on">
+            <div class="field">
+                <label for="username">Username or Email</label>
+                <input type="text" id="username" name="username" placeholder="e.g. admin"
+                       autocomplete="username" required autofocus>
+                <div class="field-error" id="usernameError"></div>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <div class="password-wrap">
+                    <input type="password" id="password" name="password" class="has-toggle"
+                           placeholder="Enter your password"
+                           autocomplete="current-password" required>
+                    <button type="button" class="toggle-password" id="togglePassword"
+                            aria-label="Show password" aria-pressed="false"
+                            title="Show password">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M1.5 12S5.5 5.5 12 5.5 22.5 12 22.5 12 18.5 18.5 12 18.5 1.5 12 1.5 12Z"/>
+                            <circle cx="12" cy="12" r="3.2"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="field-error" id="passwordError"></div>
+            </div>
+
+            <button type="submit" class="btn-login" id="submitBtn">Sign In</button>
+        </form>
+
+        <div class="login-footer">
+            National Blood Service Zimbabwe &middot; Asset Management System<br>
+            Contact your System Administrator if you cannot access your account.
+        </div>
+    </main>
+
+    <script src="/js/api.js?v=20261013-4"></script>
+    <script src="/js/login.js?v=20261013-4"></script>
+</body>
+</html>

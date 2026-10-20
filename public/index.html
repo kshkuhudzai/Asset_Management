@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>National Blood Service Zimbabwe Asset Management System</title>
+    <link rel="stylesheet" href="/css/style.css?v=20261013-11">
+</head>
+<body>
+
+<div class="app">
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- Sidebar navigation                                                 -->
+    <!-- ------------------------------------------------------------------ -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <img class="logo" src="/images/nbsz-logo.jpg" alt="National Blood Service Zimbabwe">
+            <div>
+                <div class="title">Asset Management</div>
+                <div class="subtitle">National Blood Service Zimbabwe</div>
+            </div>
+        </div>
+
+        <nav class="nav" id="nav">
+            <div class="nav-section">Overview</div>
+            <button class="nav-item" data-view="dashboard">Dashboard</button>
+
+            <div class="nav-section">Lifecycle</div>
+            <button class="nav-item" data-view="assets">Asset Register</button>
+            <button class="nav-item" data-view="assignments">Assignments</button>
+            <button class="nav-item" data-view="transfers">Transfers</button>
+            <button class="nav-item" data-view="maintenance">Maintenance <span class="badge" id="openMaintenanceBadge" hidden>0</span></button>
+            <button class="nav-item" data-view="procurement" id="procurementNav" hidden>Procurement Receiving</button>
+
+            <div class="nav-section">Controls</div>
+            <button class="nav-item" data-view="warranty">Warranty &amp; Contracts <span class="badge" id="expiringWarrantyBadge" hidden>0</span></button>
+            <button class="nav-item" data-view="stock">ICT Stock <span class="badge" id="lowStockBadge" hidden>0</span></button>
+            <button class="nav-item" data-view="barcode">QR / Barcodes</button>
+            <button class="nav-item" data-view="verification">Verification</button>
+            <button class="nav-item" data-view="disposal">Disposal</button>
+            <button class="nav-item" data-view="licence">Software Licences</button>
+
+            <div class="nav-section">Reports</div>
+            <button class="nav-item" data-view="reports">Reports</button>
+            <div class="nav-section" id="adminNavSection" hidden>Administration</div>
+            <button class="nav-item" data-view="users" id="usersNav" hidden>User Accounts</button>
+            <button class="nav-item" data-view="referenceData" id="referenceDataNav" hidden>Departments &amp; Locations</button>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="name" id="userName">&mdash;</div>
+            <div class="role" id="userRole">&mdash;</div>
+            <button class="btn-logout" id="logoutBtn">Sign out</button>
+        </div>
+    </aside>
+
+    <!-- ------------------------------------------------------------------ -->
+    <!-- Main content                                                       -->
+    <!-- ------------------------------------------------------------------ -->
+    <main class="main">
+        <header class="topbar">
+            <h2 id="viewTitle">Dashboard</h2>
+            <div class="spacer"></div>
+        </header>
+
+        <div class="content">
+            <div id="alertBox" class="alert" role="alert" aria-live="polite"></div>
+            <div id="view"></div>
+        </div>
+    </main>
+</div>
+
+<!-- ---------------------------------------------------------------------- -->
+<!-- Form modal (shared by every module)                                    -->
+<!-- ---------------------------------------------------------------------- -->
+<div class="modal-backdrop" id="modal" hidden>
+    <div class="modal" id="modalPanel">
+        <div class="modal-head">
+            <h3 id="modalTitle">Form</h3>
+            <div class="spacer"></div>
+            <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+        </div>
+        <form id="modalForm">
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-secondary" id="modalCancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="modalSubmit">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/js/api.js?v=20261013-8"></script>
+<script src="/js/main.js?v=20261013-18"></script>
+</body>
+</html>

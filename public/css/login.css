@@ -1,0 +1,255 @@
+/* public/css/login.css
+   Styles for the login screen. Kept separate from style.css so the login page
+   renders correctly even before the main application stylesheet is built out.
+
+   It re-declares the approved red + white design tokens from style.css because the
+   login page must stand alone: it is rendered before a session exists and must
+   not depend on the application shell being loaded. Keep the two token blocks
+   in step when the palette changes. */
+
+:root {
+    --brand-red-900: #8f171d;
+    --brand-red-800: #a21d24;
+    --brand-red-700: #b3222a;
+    --brand-red-600: #c32b33;
+
+    --brand-white: #ffffff;
+    --brand-white-muted: #f4e6e7;
+    --brand-red-tint: #fff0f1;
+
+    /* Neutrals */
+    --ink: #1f2b38;
+    --ink-soft: #33414f;
+    --muted: #6b7b88;
+    --line: #dfe6ec;
+    --surface: #ffffff;
+
+    /* State semantics */
+    --danger: #c0392b;
+    --danger-tint: #fdecea;
+    --danger-line: #f5c2bd;
+    --success: #1c7a4f;
+    --success-tint: #e7f4ed;
+    --success-line: #b9e0cb;
+}
+
+* { box-sizing: border-box; }
+
+body.login-page {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:
+        radial-gradient(1200px 520px at 12% -10%, rgba(255, 255, 255, .12), transparent 60%),
+        linear-gradient(135deg, var(--brand-red-900) 0%, var(--brand-red-800) 55%, var(--brand-red-700) 100%);
+    padding: 24px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border-radius: 14px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    border-top: 4px solid var(--brand-white);
+    padding: 36px 34px 30px;
+}
+
+.login-brand {
+    text-align: center;
+    margin-bottom: 26px;
+}
+
+.login-brand .logo {
+    width: 92px;
+    height: 92px;
+    margin: 0 auto 14px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.login-brand h1 {
+    margin: 0 0 6px;
+    font-size: 21px;
+    color: var(--brand-red-900);
+}
+
+.login-brand p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.field { margin-bottom: 18px; }
+
+.field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 7px;
+}
+
+.field input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 15px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    font-family: inherit;
+    color: var(--ink);
+}
+
+.field input:focus {
+    border-color: var(--brand-red-600);
+    box-shadow: 0 0 0 3px rgba(179, 34, 42, .18);
+}
+
+.field input.is-invalid { border-color: var(--danger); }
+
+.field-error {
+    display: none;
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: var(--danger);
+}
+
+.field-error.visible { display: block; }
+
+/* --------------------------------------------------------------------------
+   Password field with the show/hide toggle
+   --------------------------------------------------------------------------
+   The toggle is absolutely positioned over the right-hand end of the input.
+   Two things keep it from overlapping the typed value:
+     1. the input reserves room with padding-right (see .has-toggle below),
+        sized to the control plus its offset, so long passwords scroll under the
+        button instead of colliding with it;
+     2. the control is a fixed-size, icon-only button centred by flexbox, so the
+        glyph and its accessible label can never stack on top of each other.
+   The visible text "Show"/"Hide" was removed in favour of an eye icon: a text
+   label inside a 30px box was what collided with the input in the first place,
+   and the wording stays available to assistive tech via aria-label/title. */
+
+.field input.has-toggle { padding-right: 48px; }
+
+.password-wrap { position: relative; }
+
+.toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 9px;
+    transform: translateY(-50%);
+
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--brand-red-700);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.toggle-password:hover { background: rgba(179, 34, 42, .09); }
+
+.toggle-password:focus-visible {
+    outline: 2px solid var(--brand-red-600);
+    outline-offset: 1px;
+}
+
+.toggle-password svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+/* Visually hidden, still announced by screen readers. */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--surface);
+    background: var(--brand-red-700);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s;
+    font-family: inherit;
+}
+
+.btn-login:hover:not(:disabled) { background: var(--brand-red-600); }
+.btn-login:disabled { opacity: .65; cursor: not-allowed; }
+
+.alert {
+    display: none;
+    padding: 11px 13px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    margin-bottom: 18px;
+    line-height: 1.45;
+}
+
+.alert.visible { display: block; }
+
+.alert-error {
+    background: var(--danger-tint);
+    border: 1px solid var(--danger-line);
+    color: var(--danger);
+}
+
+.alert-success {
+    background: var(--success-tint);
+    border: 1px solid var(--success-line);
+    color: var(--success);
+}
+
+.login-footer {
+    margin-top: 22px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 7px;
+    vertical-align: -2px;
+    border: 2px solid rgba(255, 255, 255, .45);
+    border-top-color: var(--surface);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
