@@ -1,5 +1,7 @@
 'use strict';
 
+const path = require('path');
+const fs = require('fs');
 const { zipSync, strToU8 } = require('fflate');
 const PDFDocument = require('pdfkit');
 
@@ -45,52 +47,235 @@ function createWorkbook(report) {
     return Buffer.from(zipSync(files, { level: 6 }));
 }
 
+/**
+ * Calculates responsive column widths for an A4 Landscape table (printable width: ~770pt)
+ */
+function calculateColumnWidths(columns, totalWidth) {
+    const colCount = columns.length;
+    // Default base weights
+    const weights = columns.map((col) => {
+        const key = col.key.toLowerCase();
+        const label = col.label.toLowerCase();
+        if (key.includes('ref') || key.includes('tag') || key.includes('id')) return 1.1;
+        if (key.includes('date') || key.includes('time')) return 0.95;
+        if (key.includes('cost') || key.includes('quantity') || key.includes('balance') || key.includes('seats')) return 0.85;
+        if (key.includes('status') || key.includes('condition') || key.includes('priority')) return 0.9;
+        if (label.includes('description') || label.includes('software') || label.includes('item') || label.includes('reason') || label.includes('coverage')) return 1.8;
+        if (key.includes('department') || key.includes('location') || key.includes('vendor') || key.includes('provider')) return 1.25;
+        return 1.0;
+    });
+
+    const sumWeights = weights.reduce((acc, w) => acc + w, 0);
+    let assigned = weights.map((w) => Math.floor((w / sumWeights) * totalWidth));
+    const currentSum = assigned.reduce((acc, w) => acc + w, 0);
+    // Distribute remainder
+    const diff = totalWidth - currentSum;
+    if (assigned.length > 0) {
+        assigned[assigned.length - 1] += diff;
+    }
+    return assigned;
+}
+
+function formatCell(val) {
+    if (val === null || val === undefined || val === '') return '-';
+    if (typeof val === 'number') {
+        return Number.isInteger(val) ? String(val) : val.toFixed(2);
+    }
+    const str = String(val).trim();
+    if (/^\d{4}-\d{2}-\d{2}T/.test(str)) {
+        return str.slice(0, 10);
+    }
+    return str;
+}
+
 function createPdf(report) {
     return new Promise((resolve, reject) => {
-        const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 36 });
+        const margin = 32;
+        const doc = new PDFDocument({
+            size: 'A4',
+            layout: 'landscape',
+            margin,
+            bufferPages: true
+        });
+
         const chunks = [];
         doc.on('data', (chunk) => chunks.push(chunk));
         doc.on('error', reject);
-        doc.on('end', () => resolve(Buffer.concat(chunks)));
-
-        doc.font('Helvetica-Bold').fontSize(18).fillColor('#17365d').text(report.title);
-        doc.moveDown(0.3);
-        doc.font('Helvetica').fontSize(9).fillColor('#555555')
-            .text(`Generated ${new Date().toISOString()} | ${report.rows.length} records`);
-        doc.moveDown();
-
-        const fieldsPerLine = report.columns.length > 8 ? 4 : 3;
-        report.rows.forEach((row, index) => {
-            if (doc.y + 60 > doc.page.height - doc.page.margins.bottom) doc.addPage();
-            doc.font('Helvetica-Bold').fontSize(9).fillColor('#17365d')
-                .text(`${index + 1}. ${String(row[report.columns[0].key] ?? '').slice(0, 120)}`, {
-                    width: 760,
-                    lineBreak: false,
-                    ellipsis: true
-                });
-            doc.moveDown(0.25);
-
-            for (let offset = 1; offset < report.columns.length; offset += fieldsPerLine) {
-                const fields = report.columns.slice(offset, offset + fieldsPerLine).map((column) => {
-                    const value = String(row[column.key] ?? '').replace(/\s+/g, ' ').slice(0, 120);
-                    return `${column.label}: ${value || '-'}`;
-                });
-                doc.font('Helvetica').fontSize(8).fillColor('#222222')
-                    .text(fields.join('   |   '), { width: 760, lineGap: 1 });
+        doc.on('end', () => {
+            // Add page numbers
+            const range = doc.bufferedPageRange();
+            for (let i = range.start; i < range.start + range.count; i++) {
+                doc.switchToPage(i);
+                doc.font('Helvetica').fontSize(7.5).fillColor('#64748b');
+                doc.text(
+                    `Page ${i + 1} of ${range.count}`,
+                    doc.page.width - margin - 120,
+                    doc.page.height - margin + 12,
+                    { width: 120, align: 'right' }
+                );
             }
-            doc.moveDown(0.4);
-            if (doc.y < doc.page.height - doc.page.margins.bottom) {
-                doc.strokeColor('#d9e0e8')
-                    .moveTo(doc.page.margins.left, doc.y)
-                    .lineTo(doc.page.width - doc.page.margins.right, doc.y)
-                    .stroke();
-                doc.moveDown(0.5);
-            }
+            resolve(Buffer.concat(chunks));
         });
 
-        if (!report.rows.length) {
-            doc.font('Helvetica').fontSize(10).fillColor('#555555').text('No records match these filters.');
+        const pageWidth = doc.page.width;
+        const pageHeight = doc.page.height;
+        const printableWidth = pageWidth - (margin * 2);
+        const logoPath = path.join(__dirname, '../public/images/nbsz-logo.jpg');
+        const hasLogo = fs.existsSync(logoPath);
+
+        function drawReportHeader(isFirstPage) {
+            // Top red accent bar
+            doc.rect(margin, margin - 10, printableWidth, 3.5).fill('#ba1a1a');
+
+            let headerY = margin + 4;
+            let textStartX = margin;
+
+            if (hasLogo && isFirstPage) {
+                try {
+                    doc.image(logoPath, margin, headerY, { width: 52, height: 44, fit: [52, 44] });
+                    textStartX = margin + 62;
+                } catch {
+                    // fallback if image fails
+                }
+            }
+
+            if (isFirstPage) {
+                // Main Header
+                doc.font('Helvetica-Bold').fontSize(13.5).fillColor('#0f2942')
+                    .text('NATIONAL BLOOD SERVICE ZIMBABWE', textStartX, headerY);
+                doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#ba1a1a')
+                    .text('ICT ASSET MANAGEMENT & AUDIT SYSTEM', textStartX, headerY + 16);
+                doc.font('Helvetica-Bold').fontSize(11).fillColor('#1e3a5f')
+                    .text(report.title.toUpperCase(), textStartX, headerY + 28);
+
+                // Meta box on top right
+                const metaX = pageWidth - margin - 200;
+                doc.rect(metaX, headerY, 200, 42).fillAndStroke('#f8fafc', '#e2e8f0');
+                doc.font('Helvetica-Bold').fontSize(7.5).fillColor('#475569')
+                    .text('REPORT GENERATION METADATA', metaX + 8, headerY + 6);
+                doc.font('Helvetica').fontSize(7.5).fillColor('#334155')
+                    .text(`Generated: ${new Date().toISOString().replace('T', ' ').slice(0, 19)}`, metaX + 8, headerY + 17)
+                    .text(`Records Found: ${report.rows.length} row(s)`, metaX + 8, headerY + 28);
+
+                doc.y = headerY + 52;
+
+                // KPI summary bar
+                const kpiWidth = (printableWidth - 24) / 3;
+                const kpiY = doc.y;
+                doc.rect(margin, kpiY, kpiWidth, 26).fillAndStroke('#f1f5f9', '#cbd5e1');
+                doc.font('Helvetica').fontSize(7.5).fillColor('#64748b').text('TOTAL ENTRIES', margin + 8, kpiY + 4);
+                doc.font('Helvetica-Bold').fontSize(10).fillColor('#0f2942').text(String(report.rows.length), margin + 8, kpiY + 13);
+
+                doc.rect(margin + kpiWidth + 12, kpiY, kpiWidth, 26).fillAndStroke('#f1f5f9', '#cbd5e1');
+                doc.font('Helvetica').fontSize(7.5).fillColor('#64748b').text('DATA CLASSIFICATION', margin + kpiWidth + 20, kpiY + 4);
+                doc.font('Helvetica-Bold').fontSize(9).fillColor('#0f2942').text('Official NBSZ Register', margin + kpiWidth + 20, kpiY + 14);
+
+                doc.rect(margin + (kpiWidth * 2) + 24, kpiY, kpiWidth, 26).fillAndStroke('#f1f5f9', '#cbd5e1');
+                doc.font('Helvetica').fontSize(7.5).fillColor('#64748b').text('STATUS', margin + (kpiWidth * 2) + 32, kpiY + 4);
+                doc.font('Helvetica-Bold').fontSize(9).fillColor('#166534').text('Active & Verified', margin + (kpiWidth * 2) + 32, kpiY + 14);
+
+                doc.y = kpiY + 36;
+            } else {
+                // Secondary page concise running header
+                doc.font('Helvetica-Bold').fontSize(9).fillColor('#0f2942')
+                    .text(`National Blood Service Zimbabwe — ${report.title}`, margin, headerY);
+                doc.font('Helvetica').fontSize(7.5).fillColor('#64748b')
+                    .text(`Extracted ${new Date().toISOString().slice(0, 10)}`, pageWidth - margin - 150, headerY, { width: 150, align: 'right' });
+                doc.y = headerY + 16;
+            }
         }
+
+        function drawFooter() {
+            const footerY = pageHeight - margin + 12;
+            doc.strokeColor('#cbd5e1').lineWidth(0.5)
+                .moveTo(margin, footerY - 4)
+                .lineTo(pageWidth - margin, footerY - 4)
+                .stroke();
+            doc.font('Helvetica').fontSize(7.5).fillColor('#64748b')
+                .text('Confidential — National Blood Service Zimbabwe • Internal ICT Audit Document', margin, footerY);
+        }
+
+        const colWidths = calculateColumnWidths(report.columns, printableWidth);
+        const headerHeight = 18;
+        const rowHeight = 16;
+
+        function drawTableHeaders(tableY) {
+            // Header bar background
+            doc.rect(margin, tableY, printableWidth, headerHeight).fill('#0f2942');
+
+            let curX = margin;
+            report.columns.forEach((col, idx) => {
+                const w = colWidths[idx];
+                doc.font('Helvetica-Bold').fontSize(7).fillColor('#ffffff')
+                    .text(col.label.toUpperCase(), curX + 4, tableY + 5, {
+                        width: w - 8,
+                        lineBreak: false,
+                        ellipsis: true
+                    });
+                curX += w;
+            });
+            return tableY + headerHeight;
+        }
+
+        // Draw First Page Header
+        drawReportHeader(true);
+        drawFooter();
+
+        let currentY = doc.y;
+        currentY = drawTableHeaders(currentY);
+
+        if (!report.rows.length) {
+            doc.rect(margin, currentY, printableWidth, 32).fillAndStroke('#f8fafc', '#e2e8f0');
+            doc.font('Helvetica').fontSize(9).fillColor('#64748b')
+                .text('No matching records were found for the selected criteria.', margin + 10, currentY + 11);
+        } else {
+            report.rows.forEach((row, rowIndex) => {
+                // Check if page break is needed
+                if (currentY + rowHeight > pageHeight - margin - 20) {
+                    doc.addPage();
+                    drawReportHeader(false);
+                    drawFooter();
+                    currentY = drawTableHeaders(doc.y);
+                }
+
+                // Row background (zebra stripe)
+                const isEven = rowIndex % 2 === 0;
+                const bgColor = isEven ? '#ffffff' : '#f8fafc';
+                doc.rect(margin, currentY, printableWidth, rowHeight).fill(bgColor);
+
+                // Row border bottom
+                doc.strokeColor('#f1f5f9').lineWidth(0.5)
+                    .moveTo(margin, currentY + rowHeight)
+                    .lineTo(margin + printableWidth, currentY + rowHeight)
+                    .stroke();
+
+                let curX = margin;
+                report.columns.forEach((col, colIdx) => {
+                    const w = colWidths[colIdx];
+                    const val = formatCell(row[col.key]);
+                    const key = col.key.toLowerCase();
+                    const isNum = key.includes('cost') || key.includes('quantity') || key.includes('balance') || key.includes('seats');
+
+                    doc.font('Helvetica').fontSize(7).fillColor('#1e293b')
+                        .text(val, curX + 4, currentY + 4, {
+                            width: w - 8,
+                            lineBreak: false,
+                            ellipsis: true,
+                            align: isNum ? 'right' : 'left'
+                        });
+                    curX += w;
+                });
+
+                currentY += rowHeight;
+            });
+
+            // Outer bottom border of table
+            doc.strokeColor('#cbd5e1').lineWidth(1)
+                .moveTo(margin, currentY)
+                .lineTo(margin + printableWidth, currentY)
+                .stroke();
+        }
+
         doc.end();
     });
 }

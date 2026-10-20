@@ -3,56 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>National Blood Service Zimbabwe Asset Management System</title>
-    <link rel="stylesheet" href="/css/style.css?v=20261013-11">
+    <title>National Blood Service Zimbabwe — ICT Asset Management System</title>
+    <link rel="stylesheet" href="/css/style.css?v=20261020-01">
 </head>
 <body>
 
-<div class="app">
+<div class="app" id="appRoot">
 
     <!-- ------------------------------------------------------------------ -->
     <!-- Sidebar navigation                                                 -->
     <!-- ------------------------------------------------------------------ -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
             <img class="logo" src="/images/nbsz-logo.jpg" alt="National Blood Service Zimbabwe">
-            <div>
-                <div class="title">Asset Management</div>
-                <div class="subtitle">National Blood Service Zimbabwe</div>
+            <div class="brand-text">
+                <div class="title">NBSZ Asset Core</div>
+                <div class="subtitle">Blood Service Zimbabwe</div>
             </div>
         </div>
 
         <nav class="nav" id="nav">
             <div class="nav-section">Overview</div>
-            <button class="nav-item" data-view="dashboard">Dashboard</button>
+            <button class="nav-item active" data-view="dashboard" title="Dashboard">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span class="nav-text">Dashboard</span>
+            </button>
 
             <div class="nav-section">Lifecycle</div>
-            <button class="nav-item" data-view="assets">Asset Register</button>
-            <button class="nav-item" data-view="assignments">Assignments</button>
-            <button class="nav-item" data-view="transfers">Transfers</button>
-            <button class="nav-item" data-view="maintenance">Maintenance <span class="badge" id="openMaintenanceBadge" hidden>0</span></button>
-            <button class="nav-item" data-view="procurement" id="procurementNav" hidden>Procurement Receiving</button>
+            <button class="nav-item" data-view="assets" title="Asset Register">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                <span class="nav-text">Asset Register</span>
+            </button>
+            <button class="nav-item" data-view="assignments" title="Assignments & Custody">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7.5" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                <span class="nav-text">Assignments</span>
+            </button>
+            <button class="nav-item" data-view="transfers" title="Asset Transfers">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                <span class="nav-text">Transfers</span>
+            </button>
+            <button class="nav-item" data-view="maintenance" title="Maintenance & Repairs">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                <span class="nav-text">Maintenance</span>
+                <span class="badge" id="openMaintenanceBadge" hidden>0</span>
+            </button>
+            <button class="nav-item" data-view="procurement" id="procurementNav" hidden title="Procurement Receiving">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                <span class="nav-text">Procurement</span>
+            </button>
 
             <div class="nav-section">Controls</div>
-            <button class="nav-item" data-view="warranty">Warranty &amp; Contracts <span class="badge" id="expiringWarrantyBadge" hidden>0</span></button>
-            <button class="nav-item" data-view="stock">ICT Stock <span class="badge" id="lowStockBadge" hidden>0</span></button>
-            <button class="nav-item" data-view="barcode">QR / Barcodes</button>
-            <button class="nav-item" data-view="verification">Verification</button>
-            <button class="nav-item" data-view="disposal">Disposal</button>
-            <button class="nav-item" data-view="licence">Software Licences</button>
+            <button class="nav-item" data-view="warranty" title="Warranty & Service Contracts">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span class="nav-text">Warranty &amp; SLAs</span>
+                <span class="badge" id="expiringWarrantyBadge" hidden>0</span>
+            </button>
+            <button class="nav-item" data-view="stock" title="ICT Store & Spares">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                <span class="nav-text">ICT Stock</span>
+                <span class="badge" id="lowStockBadge" hidden>0</span>
+            </button>
+            <button class="nav-item" data-view="barcode" title="QR Codes & Barcode Register">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="5"></rect><rect x="16" y="3" width="5" height="5"></rect><rect x="3" y="16" width="5" height="5"></rect><path d="M21 16h-3v5h3v-5zM12 7v3M7 12h3M12 12v3M15 12h2M12 18v3"></path></svg>
+                <span class="nav-text">QR / Barcodes</span>
+            </button>
+            <button class="nav-item" data-view="verification" title="Physical Verification Audit">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                <span class="nav-text">Verification</span>
+            </button>
+            <button class="nav-item" data-view="disposal" title="Asset Disposals">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                <span class="nav-text">Disposal</span>
+            </button>
+            <button class="nav-item" data-view="licence" title="Software Licences">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span class="nav-text">Software Licences</span>
+            </button>
 
-            <div class="nav-section">Reports</div>
-            <button class="nav-item" data-view="reports">Reports</button>
+            <div class="nav-section">Reports &amp; Admin</div>
+            <button class="nav-item" data-view="reports" title="Management Reports & Analytics">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                <span class="nav-text">Reports</span>
+            </button>
             <div class="nav-section" id="adminNavSection" hidden>Administration</div>
-            <button class="nav-item" data-view="users" id="usersNav" hidden>User Accounts</button>
-            <button class="nav-item" data-view="referenceData" id="referenceDataNav" hidden>Departments &amp; Locations</button>
+            <button class="nav-item" data-view="users" id="usersNav" hidden title="User Accounts">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span class="nav-text">User Accounts</span>
+            </button>
+            <button class="nav-item" data-view="referenceData" id="referenceDataNav" hidden title="Departments & Locations">
+                <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span class="nav-text">Dept &amp; Locations</span>
+            </button>
         </nav>
-
-        <div class="sidebar-user">
-            <div class="name" id="userName">&mdash;</div>
-            <div class="role" id="userRole">&mdash;</div>
-            <button class="btn-logout" id="logoutBtn">Sign out</button>
-        </div>
     </aside>
 
     <!-- ------------------------------------------------------------------ -->
@@ -60,8 +102,148 @@
     <!-- ------------------------------------------------------------------ -->
     <main class="main">
         <header class="topbar">
-            <h2 id="viewTitle">Dashboard</h2>
+            <!-- Sidebar toggle button -->
+            <button id="sidebarToggle" class="sidebar-toggle" title="Toggle Navigation Sidebar" aria-label="Toggle Sidebar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+
+            <div class="topbar-title-wrap">
+                <h2 id="viewTitle">Dashboard</h2>
+                <span class="topbar-sub">National Blood Service Zimbabwe</span>
+            </div>
+
             <div class="spacer"></div>
+
+            <!-- Top Right Controls: Settings & User Profile Menu with Tabs -->
+            <div class="topbar-actions">
+                <button id="topbarSettingsBtn" class="topbar-icon-btn" title="Display & View Settings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+
+                <!-- User profile pill dropdown -->
+                <div class="user-menu-container" id="userMenuContainer">
+                    <button class="user-menu-pill" id="userMenuPill" aria-haspopup="true" aria-expanded="false">
+                        <div class="user-avatar-circle" id="userAvatar">AD</div>
+                        <div class="user-pill-info">
+                            <span class="user-pill-name" id="userName">Administrator</span>
+                            <span class="user-pill-role" id="userRole">System Administrator</span>
+                        </div>
+                        <svg class="pill-caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+
+                    <!-- Dropdown with Tabs -->
+                    <div class="user-dropdown-card" id="userDropdownCard" hidden>
+                        <div class="ud-tab-bar">
+                            <button class="ud-tab-btn active" data-tab="profile">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                Profile
+                            </button>
+                            <button class="ud-tab-btn" data-tab="password">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                Password
+                            </button>
+                            <button class="ud-tab-btn" data-tab="settings">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                Settings
+                            </button>
+                        </div>
+
+                        <!-- Tab 1: Profile View -->
+                        <div class="ud-pane active" id="udPaneProfile">
+                            <div class="ud-profile-card">
+                                <div class="ud-avatar-lg" id="udAvatarLg">AD</div>
+                                <div class="ud-profile-text">
+                                    <div class="ud-full-name" id="udFullName">Administrator</div>
+                                    <div class="ud-email muted" id="udEmail">admin@nbsz.co.zw</div>
+                                    <span class="badge-pill ok" id="udRoleBadge">System Administrator</span>
+                                </div>
+                            </div>
+                            <div class="ud-meta-list">
+                                <div class="ud-meta-item">
+                                    <span class="muted">Username</span>
+                                    <strong id="udUsername">admin</strong>
+                                </div>
+                                <div class="ud-meta-item">
+                                    <span class="muted">Access Level</span>
+                                    <strong id="udAccess">Full Administrative</strong>
+                                </div>
+                                <div class="ud-meta-item">
+                                    <span class="muted">Session</span>
+                                    <strong class="text-success">Active &amp; Authenticated</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Change Password View -->
+                        <div class="ud-pane" id="udPanePassword">
+                            <form id="quickChangePasswordForm">
+                                <div class="field-wrap">
+                                    <label class="field-label" for="qCurrentPassword">Current Password *</label>
+                                    <input type="password" id="qCurrentPassword" required autocomplete="current-password" placeholder="Enter current password">
+                                </div>
+                                <div class="field-wrap">
+                                    <label class="field-label" for="qNewPassword">New Password *</label>
+                                    <input type="password" id="qNewPassword" required minlength="8" autocomplete="new-password" placeholder="Min. 8 chars (upper, lower, num, special)">
+                                </div>
+                                <div class="field-wrap">
+                                    <label class="field-label" for="qConfirmPassword">Confirm New Password *</label>
+                                    <input type="password" id="qConfirmPassword" required minlength="8" autocomplete="new-password" placeholder="Re-type new password">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm full" id="qPasswordSubmit">Save New Password</button>
+                            </form>
+                        </div>
+
+                        <!-- Tab 3: Settings Across Tabs -->
+                        <div class="ud-pane" id="udPaneSettings">
+                            <div class="settings-group">
+                                <div class="settings-title">Table Display Density</div>
+                                <div class="settings-desc muted">Controls table cell padding across all list tabs.</div>
+                                <select id="settingDensity" class="setting-select">
+                                    <option value="comfortable">Comfortable (Spacious)</option>
+                                    <option value="default" selected>Standard Enterprise</option>
+                                    <option value="compact">Compact (Maximum rows visible)</option>
+                                </select>
+                            </div>
+
+                            <div class="settings-group">
+                                <div class="settings-title">Default Rows Per Page</div>
+                                <div class="settings-desc muted">Initial page size for tables.</div>
+                                <select id="settingPageSize" class="setting-select">
+                                    <option value="10">10 rows per page</option>
+                                    <option value="25" selected>25 rows per page</option>
+                                    <option value="50">50 rows per page</option>
+                                    <option value="100">100 rows per page</option>
+                                </select>
+                            </div>
+
+                            <div class="settings-group">
+                                <div class="settings-title">Visual Contrast Mode</div>
+                                <div class="settings-desc muted">Sharpen borders and column delineation.</div>
+                                <select id="settingContrast" class="setting-select">
+                                    <option value="standard" selected>Standard NBSZ Theme</option>
+                                    <option value="high">High Contrast (Crisp Gridlines)</option>
+                                </select>
+                            </div>
+
+                            <div class="settings-group">
+                                <div class="settings-title">Dashboard Live Charts</div>
+                                <div class="settings-desc muted">Enable interactive graphical breakdowns.</div>
+                                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                                    <input type="checkbox" id="settingChartsEnabled" checked style="width:auto;"> Enable Charts on Dashboard &amp; Reports
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Card Footer: Sign out button -->
+                        <div class="ud-card-footer">
+                            <button class="btn-logout-full" id="logoutBtn">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </header>
 
         <div class="content">
@@ -72,7 +254,60 @@
 </div>
 
 <!-- ---------------------------------------------------------------------- -->
-<!-- Form modal (shared by every module)                                    -->
+<!-- Global Settings Modal (Accessible via topbar gear button)              -->
+<!-- ---------------------------------------------------------------------- -->
+<div class="modal-backdrop" id="settingsModal" hidden>
+    <div class="modal">
+        <div class="modal-head">
+            <h3>System &amp; Workspace Settings</h3>
+            <div class="spacer"></div>
+            <button class="modal-close" id="settingsModalClose" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="settings-modal-content">
+                <div class="settings-group">
+                    <label class="field-label" for="mSettingDensity">Table Grid Density</label>
+                    <select id="mSettingDensity" class="setting-select">
+                        <option value="comfortable">Comfortable</option>
+                        <option value="default" selected>Default</option>
+                        <option value="compact">Compact (High density)</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label class="field-label" for="mSettingPageSize">Default Pagination Limit</label>
+                    <select id="mSettingPageSize" class="setting-select">
+                        <option value="10">10 entries</option>
+                        <option value="25" selected>25 entries</option>
+                        <option value="50">50 entries</option>
+                        <option value="100">100 entries</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label class="field-label" for="mSettingContrast">Display Contrast</label>
+                    <select id="mSettingContrast" class="setting-select">
+                        <option value="standard" selected>Standard Enterprise</option>
+                        <option value="high">High Contrast Grid</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label class="field-label" for="mSettingAutoRefresh">Auto-Refresh Dashboards</label>
+                    <select id="mSettingAutoRefresh" class="setting-select">
+                        <option value="0" selected>Disabled (Manual refresh)</option>
+                        <option value="60000">Every 1 minute</option>
+                        <option value="300000">Every 5 minutes</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button type="button" class="btn btn-secondary" id="settingsModalCancel">Close</button>
+            <button type="button" class="btn btn-primary" id="settingsModalSave">Apply Preferences</button>
+        </div>
+    </div>
+</div>
+
+<!-- ---------------------------------------------------------------------- -->
+<!-- Shared Form Modal                                                      -->
 <!-- ---------------------------------------------------------------------- -->
 <div class="modal-backdrop" id="modal" hidden>
     <div class="modal" id="modalPanel">
@@ -91,7 +326,10 @@
     </div>
 </div>
 
-<script src="/js/api.js?v=20261013-8"></script>
-<script src="/js/main.js?v=20261013-18"></script>
+<!-- Chart.js Engine (Loaded Locally) -->
+<script src="/js/chart.min.js"></script>
+
+<script src="/js/api.js?v=20261020-01"></script>
+<script src="/js/main.js?v=20261020-01"></script>
 </body>
 </html>

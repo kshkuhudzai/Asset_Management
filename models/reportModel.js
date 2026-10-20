@@ -219,30 +219,25 @@ async function getReport(type, filters = {}) {
 
     for (const key of ['status', 'department', 'location', 'category']) {
         if (!filters[key]) continue;
-        if (!report.filters[key]) {
-            throw Object.assign(new Error(`The ${key} filter is not available for this report.`), {
-                status: 400
-            });
-        }
+        if (!report.filters || !report.filters[key]) continue;
         addFilter(clauses, params, report.filters[key], filters[key]);
     }
-    if (filters.search) {
+    if (filters.search && report.search) {
         const search = report.search.map((field) => `${field} LIKE ?`).join(' OR ');
         clauses.push(`(${search})`);
         report.search.forEach(() => params.push(`%${filters.search}%`));
     }
-    if (filters.from || filters.to) {
-        if (!report.date) {
-            throw Object.assign(new Error('Date filters are not available for this report.'), {
-                status: 400
-            });
+    if ((filters.from || filters.to) && report.date) {
+        if (filters.from) {
+            addFilter(clauses, params, report.date, filters.from, '>=');
         }
-        addFilter(clauses, params, report.date, filters.from, '>=');
-        if (filters.to && report.dateTime) {
-            clauses.push(`${report.date} < DATE_ADD(?, INTERVAL 1 DAY)`);
-            params.push(filters.to);
-        } else {
-            addFilter(clauses, params, report.date, filters.to, '<=');
+        if (filters.to) {
+            if (report.dateTime) {
+                clauses.push(`${report.date} < DATE_ADD(?, INTERVAL 1 DAY)`);
+                params.push(filters.to);
+            } else {
+                addFilter(clauses, params, report.date, filters.to, '<=');
+            }
         }
     }
 

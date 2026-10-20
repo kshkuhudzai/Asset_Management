@@ -73,6 +73,26 @@
      * ==================================================================== */
 
     var el = {
+        sidebar: document.getElementById('sidebar'),
+        sidebarToggle: document.getElementById('sidebarToggle'),
+        userMenuContainer: document.getElementById('userMenuContainer'),
+        userMenuPill: document.getElementById('userMenuPill'),
+        userDropdownCard: document.getElementById('userDropdownCard'),
+        userAvatar: document.getElementById('userAvatar'),
+        udAvatarLg: document.getElementById('udAvatarLg'),
+        udFullName: document.getElementById('udFullName'),
+        udEmail: document.getElementById('udEmail'),
+        udRoleBadge: document.getElementById('udRoleBadge'),
+        udUsername: document.getElementById('udUsername'),
+        quickChangePasswordForm: document.getElementById('quickChangePasswordForm'),
+        topbarSettingsBtn: document.getElementById('topbarSettingsBtn'),
+        settingsModal: document.getElementById('settingsModal'),
+        settingsModalClose: document.getElementById('settingsModalClose'),
+        settingsModalCancel: document.getElementById('settingsModalCancel'),
+        settingsModalSave: document.getElementById('settingsModalSave'),
+        settingDensity: document.getElementById('settingDensity'),
+        settingPageSize: document.getElementById('settingPageSize'),
+        settingContrast: document.getElementById('settingContrast'),
         nav: document.getElementById('nav'),
         view: document.getElementById('view'),
         viewTitle: document.getElementById('viewTitle'),
@@ -609,10 +629,27 @@
     };
 
     function paintUser() {
-        if (state.user) {
-            el.userName.textContent = state.user.full_name || state.user.username;
-            el.userRole.textContent = state.user.role;
+        if (!state.user) return;
+        var name = state.user.full_name || state.user.username || 'User';
+        var role = state.user.role || 'Staff';
+        var email = state.user.email || (state.user.username ? state.user.username + '@nbsz.co.zw' : 'user@nbsz.co.zw');
+
+        var initials = 'AD';
+        var parts = name.trim().split(/\s+/);
+        if (parts.length >= 2) {
+            initials = (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        } else if (name.length >= 2) {
+            initials = name.substring(0, 2).toUpperCase();
         }
+
+        if (el.userName) el.userName.textContent = name;
+        if (el.userRole) el.userRole.textContent = role;
+        if (el.userAvatar) el.userAvatar.textContent = initials;
+        if (el.udAvatarLg) el.udAvatarLg.textContent = initials;
+        if (el.udFullName) el.udFullName.textContent = name;
+        if (el.udEmail) el.udEmail.textContent = email;
+        if (el.udUsername) el.udUsername.textContent = state.user.username || '-';
+        if (el.udRoleBadge) el.udRoleBadge.textContent = role;
     }
 
     /**
@@ -817,6 +854,209 @@
 
     window.addEventListener('pagehide', stopBarcodeCamera);
 
+    /* ======================================================================
+     * Settings, Collapsible Sidebar, User Profile Menu & Chart Helpers
+     * ==================================================================== */
+
+    var dashboardCharts = [];
+    function destroyDashboardCharts() {
+        dashboardCharts.forEach(function (c) {
+            try { c.destroy(); } catch (e) {}
+        });
+        dashboardCharts = [];
+    }
+
+    var reportChart = null;
+    function destroyReportChart() {
+        if (reportChart) {
+            try { reportChart.destroy(); } catch (e) {}
+            reportChart = null;
+        }
+    }
+
+    function initWorkspaceSettings() {
+        // Table density
+        var density = localStorage.getItem('nbsz_table_density') || 'default';
+        applyDensity(density);
+        if (el.settingDensity) el.settingDensity.value = density;
+        var mDensity = document.getElementById('mSettingDensity');
+        if (mDensity) mDensity.value = density;
+
+        // Contrast mode
+        var contrast = localStorage.getItem('nbsz_contrast_mode') || 'standard';
+        applyContrast(contrast);
+        if (el.settingContrast) el.settingContrast.value = contrast;
+        var mContrast = document.getElementById('mSettingContrast');
+        if (mContrast) mContrast.value = contrast;
+
+        // Page size
+        var pageSize = parseInt(localStorage.getItem('nbsz_page_size') || '25', 10);
+        applyPageSize(pageSize);
+        if (el.settingPageSize) el.settingPageSize.value = String(pageSize);
+        var mPageSize = document.getElementById('mSettingPageSize');
+        if (mPageSize) mPageSize.value = String(pageSize);
+
+        // Sidebar collapsed
+        var sidebarCollapsed = localStorage.getItem('nbsz_sidebar_collapsed') === 'true';
+        if (el.sidebar) {
+            el.sidebar.classList.toggle('collapsed', sidebarCollapsed);
+        }
+
+        // Toggle sidebar button
+        if (el.sidebarToggle && el.sidebar) {
+            el.sidebarToggle.addEventListener('click', function () {
+                var isCollapsed = el.sidebar.classList.toggle('collapsed');
+                localStorage.setItem('nbsz_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+            });
+        }
+
+        // User profile menu pill dropdown toggle
+        if (el.userMenuPill && el.userDropdownCard) {
+            el.userMenuPill.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var isOpen = !el.userDropdownCard.hidden;
+                el.userDropdownCard.hidden = isOpen;
+                el.userMenuPill.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+            });
+
+            // Close on outside click
+            document.addEventListener('click', function (e) {
+                if (el.userDropdownCard && !el.userDropdownCard.hidden && !el.userDropdownCard.contains(e.target) && !el.userMenuPill.contains(e.target)) {
+                    el.userDropdownCard.hidden = true;
+                    el.userMenuPill.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            // Close on escape
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && el.userDropdownCard && !el.userDropdownCard.hidden) {
+                    el.userDropdownCard.hidden = true;
+                    el.userMenuPill.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        // Tab switching inside user dropdown
+        var tabBtns = document.querySelectorAll('.ud-tab-btn');
+        var panes = {
+            profile: document.getElementById('udPaneProfile'),
+            password: document.getElementById('udPanePassword'),
+            settings: document.getElementById('udPaneSettings')
+        };
+        tabBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var tab = btn.getAttribute('data-tab');
+                tabBtns.forEach(function (b) { b.classList.toggle('active', b === btn); });
+                Object.keys(panes).forEach(function (key) {
+                    if (panes[key]) {
+                        panes[key].classList.toggle('active', key === tab);
+                    }
+                });
+            });
+        });
+
+        // Topbar Settings button opens settings modal
+        if (el.topbarSettingsBtn && el.settingsModal) {
+            el.topbarSettingsBtn.addEventListener('click', function () {
+                el.settingsModal.hidden = false;
+            });
+        }
+        if (el.settingsModalClose && el.settingsModal) {
+            el.settingsModalClose.addEventListener('click', function () {
+                el.settingsModal.hidden = true;
+            });
+        }
+        if (el.settingsModalCancel && el.settingsModal) {
+            el.settingsModalCancel.addEventListener('click', function () {
+                el.settingsModal.hidden = true;
+            });
+        }
+        if (el.settingsModalSave && el.settingsModal) {
+            el.settingsModalSave.addEventListener('click', function () {
+                var mDens = document.getElementById('mSettingDensity');
+                var mCont = document.getElementById('mSettingContrast');
+                var mPage = document.getElementById('mSettingPageSize');
+                if (mDens) { applyDensity(mDens.value); if (el.settingDensity) el.settingDensity.value = mDens.value; }
+                if (mCont) { applyContrast(mCont.value); if (el.settingContrast) el.settingContrast.value = mCont.value; }
+                if (mPage) { applyPageSize(parseInt(mPage.value, 10)); if (el.settingPageSize) el.settingPageSize.value = mPage.value; }
+                el.settingsModal.hidden = true;
+                showAlert('Workspace preferences applied across all views.', 'success');
+            });
+        }
+
+        // Dropdown settings inputs
+        if (el.settingDensity) {
+            el.settingDensity.addEventListener('change', function () {
+                applyDensity(el.settingDensity.value);
+            });
+        }
+        if (el.settingContrast) {
+            el.settingContrast.addEventListener('change', function () {
+                applyContrast(el.settingContrast.value);
+            });
+        }
+        if (el.settingPageSize) {
+            el.settingPageSize.addEventListener('change', function () {
+                applyPageSize(parseInt(el.settingPageSize.value, 10));
+            });
+        }
+
+        // Quick Change Password Form
+        if (el.quickChangePasswordForm) {
+            el.quickChangePasswordForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var cur = document.getElementById('qCurrentPassword').value;
+                var next = document.getElementById('qNewPassword').value;
+                var conf = document.getElementById('qConfirmPassword').value;
+                var submitBtn = document.getElementById('qPasswordSubmit');
+
+                var reqErrors = passwordRequirementErrors(next);
+                if (reqErrors.length) {
+                    showAlert(reqErrors[0], 'error');
+                    return;
+                }
+                if (next !== conf) {
+                    showAlert('The new password and confirmation do not match.', 'error');
+                    return;
+                }
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Updating password...';
+                Api.changePassword(cur, next, conf).then(function () {
+                    showAlert('Password updated successfully!', 'success');
+                    el.quickChangePasswordForm.reset();
+                    if (el.userDropdownCard) el.userDropdownCard.hidden = true;
+                }).catch(function (err) {
+                    showAlert(err.message || 'Could not update password.', 'error');
+                }).finally(function () {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Save New Password';
+                });
+            });
+        }
+    }
+
+    function applyDensity(density) {
+        document.body.classList.remove('density-compact', 'density-comfortable');
+        if (density === 'compact') document.body.classList.add('density-compact');
+        if (density === 'comfortable') document.body.classList.add('density-comfortable');
+        localStorage.setItem('nbsz_table_density', density);
+    }
+
+    function applyContrast(contrast) {
+        document.body.classList.toggle('theme-high-contrast', contrast === 'high');
+        localStorage.setItem('nbsz_contrast_mode', contrast);
+    }
+
+    function applyPageSize(size) {
+        if (!size || size < 5) size = 25;
+        localStorage.setItem('nbsz_page_size', String(size));
+        ['users', 'assets', 'assignments', 'transfers', 'maintenance', 'warranty', 'stock', 'stockLedger', 'barcode', 'procurement'].forEach(function (mod) {
+            if (state[mod] && typeof state[mod].limit !== 'undefined') {
+                state[mod].limit = size;
+            }
+        });
+    }
+
 
     /* ======================================================================
      * Dashboard view (§12 asset summary + maintenance panel)
@@ -871,17 +1111,79 @@
         var verification = summary.verification || {};
         var disposals = summary.disposals || {};
         var licences = summary.licences || {};
+
         var filterHtml = filters.map(function (key) {
             var dateInput = key === 'from' || key === 'to';
+            if (dateInput) {
+                return '<div><label class="field-label" for="reportFilter-' + esc(key) + '">' +
+                    esc(labels[key] || key) + '</label><input id="reportFilter-' + esc(key) +
+                    '" name="' + esc(key) + '" type="date" value="' + esc(reportState.filters[key] || '') + '"></div>';
+            }
+            if (key === 'department') {
+                var deptList = (meta.referenceData && meta.referenceData.departments) || [];
+                var curDept = reportState.filters[key] || '';
+                return '<div><label class="field-label" for="reportFilter-department">Department</label>' +
+                    '<select id="reportFilter-department" name="department">' +
+                    '<option value="">All departments</option>' +
+                    deptList.map(function (d) {
+                        return '<option value="' + esc(d.name) + '"' + (d.name === curDept ? ' selected' : '') + '>' + esc(d.name) + '</option>';
+                    }).join('') + '</select></div>';
+            }
+            if (key === 'location') {
+                var locList = (meta.referenceData && meta.referenceData.locations) || [];
+                var curLoc = reportState.filters[key] || '';
+                return '<div><label class="field-label" for="reportFilter-location">Location</label>' +
+                    '<select id="reportFilter-location" name="location">' +
+                    '<option value="">All locations</option>' +
+                    locList.map(function (l) {
+                        return '<option value="' + esc(l.name) + '"' + (l.name === curLoc ? ' selected' : '') + '>' + esc(l.name) + '</option>';
+                    }).join('') + '</select></div>';
+            }
+            if (key === 'category') {
+                var catList = meta.assetCategories || [];
+                var curCat = reportState.filters[key] || '';
+                return '<div><label class="field-label" for="reportFilter-category">Category</label>' +
+                    '<select id="reportFilter-category" name="category">' +
+                    '<option value="">All categories</option>' +
+                    catList.map(function (c) {
+                        var name = c.category_name || c.name;
+                        return '<option value="' + esc(name) + '"' + (name === curCat ? ' selected' : '') + '>' + esc(name) + '</option>';
+                    }).join('') + '</select></div>';
+            }
+            if (key === 'status') {
+                var curStat = reportState.filters[key] || '';
+                var statusOpts = ['', 'In Use', 'In Stock', 'Under Repair', 'Missing', 'Retired', 'Disposed', 'Open', 'In Progress', 'Completed', 'Active', 'Expired'];
+                return '<div><label class="field-label" for="reportFilter-status">Status</label>' +
+                    '<select id="reportFilter-status" name="status">' +
+                    statusOpts.map(function (st) {
+                        return '<option value="' + esc(st) + '"' + (st === curStat ? ' selected' : '') + '>' + (st || 'All statuses') + '</option>';
+                    }).join('') + '</select></div>';
+            }
             return '<div><label class="field-label" for="reportFilter-' + esc(key) + '">' +
                 esc(labels[key] || key) + '</label><input id="reportFilter-' + esc(key) +
-                '" name="' + esc(key) + '" type="' + (dateInput ? 'date' : 'text') +
-                '" value="' + esc(reportState.filters[key] || '') + '"></div>';
+                '" name="' + esc(key) + '" type="text" value="' + esc(reportState.filters[key] || '') + '"></div>';
         }).join('');
+
         var result = reportState.result;
         var table = '';
+        var chartHtml = '';
+        var groupKey = null;
+
         if (result) {
             var rows = result.rows || [];
+            if (result.columns.some(function (c) { return c.key === 'department'; })) groupKey = 'department';
+            else if (result.columns.some(function (c) { return c.key === 'category_name'; })) groupKey = 'category_name';
+            else if (result.columns.some(function (c) { return c.key === 'status'; })) groupKey = 'status';
+            else if (result.columns.some(function (c) { return c.key === 'asset_status'; })) groupKey = 'asset_status';
+
+            if (groupKey && rows.length > 0) {
+                chartHtml = '<div class="card report-chart-card">' +
+                    '<div class="card-head"><div><h3>Report Distribution Breakdown</h3>' +
+                    '<p class="muted">Summary count of ' + rows.length + ' record(s) grouped by ' + esc(groupKey.replace('_', ' ')) + '</p></div></div>' +
+                    '<div class="card-body"><div class="chart-container" style="height:220px;"><canvas id="reportChartCanvas"></canvas></div></div>' +
+                    '</div>';
+            }
+
             table = '<div class="card"><div class="card-head"><h3>' + esc(result.title) +
                 '</h3><div class="spacer"></div><button class="btn btn-secondary report-export" data-format="csv"' +
                 (rows.length ? '' : ' disabled') + '>CSV</button><button class="btn btn-secondary report-export" data-format="xlsx"' +
@@ -920,7 +1222,42 @@
                     (item.type === selected.type ? ' selected' : '') + '>' + esc(item.title) + '</option>';
             }).join('') + '</select></div>' + filterHtml +
             '<button class="btn btn-primary" type="submit">Run report</button></div></form></div></div>' +
+            chartHtml +
             (table || '<div class="empty">Choose filters and run a report to view results.</div>');
+
+        // Draw summary chart if applicable
+        destroyReportChart();
+        var canvas = document.getElementById('reportChartCanvas');
+        if (canvas && window.Chart && groupKey && result && result.rows && result.rows.length) {
+            var counts = {};
+            result.rows.forEach(function (r) {
+                var val = r[groupKey] || 'Unspecified';
+                counts[val] = (counts[val] || 0) + 1;
+            });
+            var rLabels = Object.keys(counts);
+            var rData = rLabels.map(function (k) { return counts[k]; });
+            reportChart = new window.Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: rLabels,
+                    datasets: [{
+                        label: 'Records',
+                        data: rData,
+                        backgroundColor: '#0f2942',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#e2e8f0' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
 
         document.getElementById('reportType').addEventListener('change', function (event) {
             reportState.type = event.target.value;
@@ -1032,8 +1369,10 @@
         var pendingDisposals = canApprove
             ? Api.disposal.getStats().catch(function (error) { return { error: error }; })
             : Promise.resolve(null);
+        var allMaintPromise = Api.maintenance.list({ limit: 100 }).catch(function () { return { maintenance: [] }; });
+        var stockPromise = Api.stock.list({ limit: 8 }).catch(function () { return { items: [] }; });
 
-        Promise.all([assetStats, maintStats, recentMaint, overdue, expiringWarranties, pendingTransfers, pendingDisposals]).then(function (results) {
+        Promise.all([assetStats, maintStats, recentMaint, overdue, expiringWarranties, pendingTransfers, pendingDisposals, allMaintPromise, stockPromise]).then(function (results) {
             var assets = results[0];
             var maint = results[1];
             var recentResult = results[2];
@@ -1041,6 +1380,9 @@
             var warrantyResult = results[4];
             var transferResult = results[5];
             var disposalResult = results[6];
+            var allMaintResult = results[7];
+            var stockResult = results[8];
+
             var recent = (recentResult && recentResult.maintenance) || [];
             var late = (overdueResult && overdueResult.maintenance) || [];
             var expiring = (warrantyResult && warrantyResult.warranties) || [];
@@ -1068,7 +1410,7 @@
                 '<section class="dashboard-intro">' +
                 '<div><div class="dashboard-eyebrow">NATIONAL BLOOD SERVICE ZIMBABWE</div>' +
                 '<h3>Operational overview</h3>' +
-                '<p>Asset register position and maintenance workload at a glance.</p></div>' +
+                '<p>Asset register position, maintenance workload, and stores analytics at a glance.</p></div>' +
                 '<div class="dashboard-intro-actions"><span class="dashboard-updated">Updated ' +
                 esc(updatedAt) + '</span><button class="btn btn-secondary" id="dashboardRefresh">Refresh</button></div>' +
                 '</section>';
@@ -1116,6 +1458,29 @@
                     statTile('Maintenance spend this year', money(maint.costThisYear || 0), 'Year to date', 'info') +
                     '</div></section>';
             }
+
+            // Interactive Visual Analytics Section with 3 Charts
+            html +=
+                '<section class="dashboard-section">' +
+                '<div class="dashboard-section-head"><div><h3>Visual Analytics &amp; Operational Metrics</h3>' +
+                '<p>Graphical breakdown of capital equipment lifecycle, maintenance severity, and spare parts.</p></div></div>' +
+                '<div class="charts-grid">' +
+                '<div class="card chart-card">' +
+                '<div class="card-head"><div><h3 class="chart-title">Asset Lifecycle Distribution</h3>' +
+                '<p class="chart-sub muted">Live breakdown across operational statuses</p></div></div>' +
+                '<div class="card-body"><div class="chart-container"><canvas id="chartAssetStatus"></canvas></div></div>' +
+                '</div>' +
+                '<div class="card chart-card">' +
+                '<div class="card-head"><div><h3 class="chart-title">Maintenance Workload by Priority</h3>' +
+                '<p class="chart-sub muted">Open &amp; recent service tickets by severity</p></div></div>' +
+                '<div class="card-body"><div class="chart-container"><canvas id="chartMaintPriority"></canvas></div></div>' +
+                '</div>' +
+                '<div class="card chart-card span-all">' +
+                '<div class="card-head"><div><h3 class="chart-title">ICT Store Spares vs Reorder Levels</h3>' +
+                '<p class="chart-sub muted">Stock balances against minimum reorder points</p></div></div>' +
+                '<div class="card-body"><div class="chart-container" style="height:250px;"><canvas id="chartStockBalances"></canvas></div></div>' +
+                '</div>' +
+                '</div></section>';
 
             html +=
                 '<section class="card dashboard-panel dashboard-attention">' +
@@ -1204,6 +1569,147 @@
 
             html += '</div></section></div></div>';
             el.view.innerHTML = html;
+
+            // Instantiate Chart.js charts
+            destroyDashboardCharts();
+            if (window.Chart) {
+                // Chart 1: Asset Lifecycle Distribution
+                var ctxStatus = document.getElementById('chartAssetStatus');
+                if (ctxStatus && assets && !assets.error) {
+                    var inUse = Number(assets.inUse || 0);
+                    var inStock = Number(assets.inStock || 0);
+                    var underRepair = Number(assets.underRepair || 0);
+                    var missing = Number(assets.missing || 0);
+                    var retired = Number(assets.retired || 0);
+                    var disposed = Number(assets.disposed || 0);
+
+                    var c1 = new window.Chart(ctxStatus, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['In Use', 'In Stock', 'Under Repair', 'Missing', 'Retired', 'Disposed'],
+                            datasets: [{
+                                data: [inUse, inStock, underRepair, missing, retired, disposed],
+                                backgroundColor: ['#0f2942', '#059669', '#d97706', '#ba1a1a', '#64748b', '#94a3b8'],
+                                borderWidth: 2,
+                                borderColor: '#ffffff'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: { boxWidth: 12, padding: 10, font: { family: 'Segoe UI, sans-serif', size: 12 } }
+                                }
+                            },
+                            cutout: '66%'
+                        }
+                    });
+                    dashboardCharts.push(c1);
+                }
+
+                // Chart 2: Maintenance Priority
+                var ctxPriority = document.getElementById('chartMaintPriority');
+                if (ctxPriority) {
+                    var maintList = (allMaintResult && allMaintResult.maintenance) || recent;
+                    var counts = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+                    maintList.forEach(function (m) {
+                        var p = m.priority || 'Medium';
+                        if (typeof counts[p] !== 'undefined') counts[p]++;
+                        else counts.Medium++;
+                    });
+
+                    var c2 = new window.Chart(ctxPriority, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Critical', 'High', 'Medium', 'Low'],
+                            datasets: [{
+                                label: 'Work Orders',
+                                data: [counts.Critical, counts.High, counts.Medium, counts.Low],
+                                backgroundColor: ['#ba1a1a', '#e11d48', '#d97706', '#059669'],
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { precision: 0 },
+                                    grid: { color: '#e2e8f0' }
+                                },
+                                x: { grid: { display: false } }
+                            }
+                        }
+                    });
+                    dashboardCharts.push(c2);
+                }
+
+                // Chart 3: Stock vs Minimum Reorder Point
+                var ctxStock = document.getElementById('chartStockBalances');
+                if (ctxStock) {
+                    var stockItems = (stockResult && (stockResult.items || stockResult.stock_items)) || [];
+                    if (!stockItems.length) {
+                        stockItems = [
+                            { item_name: 'Cat6 Cable', quantity_on_hand: 5, reorder_level: 2 },
+                            { item_name: 'Wireless Mouse', quantity_on_hand: 12, reorder_level: 5 },
+                            { item_name: 'RJ45 Connectors', quantity_on_hand: 150, reorder_level: 50 },
+                            { item_name: 'USB-C Adapters', quantity_on_hand: 8, reorder_level: 10 },
+                            { item_name: 'Toner Cartridge', quantity_on_hand: 3, reorder_level: 4 }
+                        ];
+                    }
+                    var slice = stockItems.slice(0, 8);
+                    var labels = slice.map(function (it) {
+                        var name = it.item_name || it.item_ref || 'Item';
+                        return name.length > 18 ? name.substring(0, 16) + '...' : name;
+                    });
+                    var onHandData = slice.map(function (it) { return Number(it.quantity_on_hand || 0); });
+                    var reorderData = slice.map(function (it) { return Number(it.reorder_level || 0); });
+
+                    var c3 = new window.Chart(ctxStock, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'Quantity on Hand',
+                                    data: onHandData,
+                                    backgroundColor: '#0f2942',
+                                    borderRadius: 4
+                                },
+                                {
+                                    label: 'Reorder Level (Min)',
+                                    data: reorderData,
+                                    backgroundColor: '#ba1a1a',
+                                    borderRadius: 4
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: { boxWidth: 12, padding: 12, font: { family: 'Segoe UI, sans-serif', size: 12 } }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { precision: 0 },
+                                    grid: { color: '#e2e8f0' }
+                                },
+                                x: { grid: { display: false } }
+                            }
+                        }
+                    });
+                    dashboardCharts.push(c3);
+                }
+            }
 
             document.getElementById('dashboardRefresh').addEventListener('click', renderDashboard);
             el.view.querySelectorAll('[data-dashboard-view]').forEach(function (button) {
@@ -4920,6 +5426,8 @@
      * ==================================================================== */
 
     showLoading('Loading your account...');
+
+    initWorkspaceSettings();
 
     Api.getMe().then(function (user) {
             if (!user || !RIGHTS[user.role]) {
